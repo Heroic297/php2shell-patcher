@@ -1,0 +1,9 @@
+== Versions
+  [UNSUPPORTED] /usr/local/bin/php 8.1.34 (none, changelog_fix=unknown)
+  [UNSUPPORTED] /usr/lib/apache2/modules/libphp.so 8.1.34 (none, changelog_fix=unknown)
+== Worker restart
+  OK   pid 1 (apache2 -DFOREGROUND ) started 2026-10-22 01:16:49 UTC >= last PHP change 2025-12-29 23:36:23 UTC
+== Effective FPM settings (php.ini/conf.d of FPM binary, overridden by pool php_admin_*)
+  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary).
+RESULT: FAIL
+rc=1

@@ -1,0 +1,7 @@
+Rolling back backup set 20261022-011903
+  removed  /usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
+  restored /usr/local/etc/php-fpm.d/docker.conf
+  restored /usr/local/etc/php-fpm.d/www.conf
+  restored /usr/local/etc/php-fpm.d/zz-docker.conf
+Restarting PHP workers:
+  + kill -USR2 1   # graceful php-fpm reload

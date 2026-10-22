@@ -1,0 +1,13 @@
+== Versions
+  [PATCHED] /usr/sbin/php-fpm8.2 8.2.35 (deb:php8.2-fpm=8.2.35-1~deb12u1, changelog_fix=yes)
+  [PATCHED] /usr/bin/php8.2 8.2.35 (deb:php8.2-cli=8.2.35-1~deb12u1, changelog_fix=yes)
+== Worker restart
+  OK   pid 1 (php-fpm: master process (/etc/php/8.2/fpm/php-fpm.conf) ) started 2026-10-22 01:16:49 UTC >= last PHP change 2026-10-22 01:15:35 UTC
+== Effective FPM settings (php.ini/conf.d of FPM binary, overridden by pool php_admin_*)
+  /usr/sbin/php-fpm8.2  memory_limit = 128M  [ini] info
+  /usr/sbin/php-fpm8.2  post_max_size = 8M  [ini] info
+  /usr/sbin/php-fpm8.2  upload_max_filesize = 2M  [ini] info
+  /usr/sbin/php-fpm8.2  session.upload_progress.enabled = On  [ini] EXPOSED
+  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary).
+RESULT: PASS
+rc=0

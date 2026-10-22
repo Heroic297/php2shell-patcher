@@ -1,0 +1,9 @@
+PHP2Shell temporary mitigations  mode=dry  post_max_size=8M upload_max_filesize=7M memory_limit=-1:no
+These are NOT a fix. Update to 8.5.12 / 8.4.27 / 8.3.36 / 8.2.35 (or your distro backport) and restart workers.
+
+unchanged: /usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
+unchanged: /usr/local/etc/php-fpm.d/docker.conf
+unchanged: /usr/local/etc/php-fpm.d/www.conf
+unchanged: /usr/local/etc/php-fpm.d/zz-docker.conf
+
+Nothing to change (mitigations already present or no PHP config found).

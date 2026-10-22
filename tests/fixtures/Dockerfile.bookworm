@@ -1,0 +1,3 @@
+FROM debian:bookworm
+RUN apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq php8.2-fpm php8.2-cli procps >/dev/null && rm -rf /var/lib/apt/lists/*
+CMD ["php-fpm8.2","-F"]

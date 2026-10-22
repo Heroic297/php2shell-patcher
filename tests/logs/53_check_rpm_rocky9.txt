@@ -1,0 +1,26 @@
+Unable to find image 'rockylinux:9' locally
+9: Pulling from library/rockylinux
+446f83f14b23: Pulling fs layer
+446f83f14b23: Verifying Checksum
+446f83f14b23: Download complete
+446f83f14b23: Pull complete
+Digest: sha256:d7be1c094cc5845ee815d4632fe377514ee6ebcf8efaed6892889657e5ddaaa6
+Status: Downloaded newer image for rockylinux:9
+php-fpm-8.0.30-8.el9_8.x86_64
+PHP2Shell check v1.0.0  (CVE-2026-109618 / CVE-2026-109619)  read-only
+Fixed: 8.2.35  8.3.36  8.4.27  8.5.12   (8.1 and older: unsupported)
+Target: host:eec44658a462    SAPIs: fpm(running)
+
+[UNSUPPORTED] host:eec44658a462  /usr/sbin/php-fpm  (8.0.30)
+              sapi=fpm package=rpm:php-fpm-8.0.30-8.el9_8.x86_64 changelog_fix=no
+              memory_limit=128M post_max_size=8M upload_max_filesize=2M session.upload_progress.enabled=On fatal_error_backtraces=n/a 
+[UNSUPPORTED] host:eec44658a462  /usr/bin/php  (8.0.30)
+              sapi=cli package=rpm:php-cli-8.0.30-8.el9_8.x86_64 changelog_fix=no
+              memory_limit=128M post_max_size=8M upload_max_filesize=2M session.upload_progress.enabled=1 fatal_error_backtraces=n/a 
+[UNSUPPORTED] host:eec44658a462  /usr/bin/php-cgi  (8.0.30)
+              sapi=cgi package=rpm:php-cli-8.0.30-8.el9_8.x86_64 changelog_fix=no
+              memory_limit=n/a post_max_size=n/a upload_max_filesize=n/a session.upload_progress.enabled=n/a fatal_error_backtraces=n/a 
+
+Overall: ACTION REQUIRED. Update to a fixed release or your distro's backport and restart every worker. 8.1 and older: take offline or use a vendor LTS backport. Temporary mitigations: php2shell_mitigate.sh (dry-run by default).
+Also check vendor products bundling PHP: https://github.com/NCSC-NL/php2shell
+rc=1

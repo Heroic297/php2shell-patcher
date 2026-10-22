@@ -1,0 +1,142 @@
+### t-85fixed dry-run
+PHP2Shell temporary mitigations  mode=dry  post_max_size=8M upload_max_filesize=7M memory_limit=-1:no
+These are NOT a fix. Update to 8.5.12 / 8.4.27 / 8.3.36 / 8.2.35 (or your distro backport) and restart workers.
+
+--- /dev/null
++++ b/usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
+@@ -0,0 +1,7 @@
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++; Official php.net temporary mitigations. Not a fix: update PHP.
++session.upload_progress.enabled = 0
++post_max_size = 8M
++upload_max_filesize = 7M
++fatal_error_backtraces = 0
++; END php2shell-mitigation
+--- a/usr/local/etc/php-fpm.d/docker.conf
++++ b/usr/local/etc/php-fpm.d/docker.conf
+@@ -17,3 +17,9 @@
+ 
+ ; default listen address for easy override in later php-fpm.d/*.conf files
+ listen = 9000
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++php_admin_flag[session.upload_progress.enabled] = off
++php_admin_value[post_max_size] = 8M
++php_admin_value[upload_max_filesize] = 7M
++php_admin_flag[fatal_error_backtraces] = off
++; END php2shell-mitigation
+--- a/usr/local/etc/php-fpm.d/www.conf
++++ b/usr/local/etc/php-fpm.d/www.conf
+@@ -487,3 +487,9 @@
+ ;php_admin_value[error_log] = /var/log/fpm-php.www.log
+ ;php_admin_flag[log_errors] = on
+ ;php_admin_value[memory_limit] = 32M
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++php_admin_flag[session.upload_progress.enabled] = off
++php_admin_value[post_max_size] = 8M
++php_admin_value[upload_max_filesize] = 7M
++php_admin_flag[fatal_error_backtraces] = off
++; END php2shell-mitigation
+--- a/usr/local/etc/php-fpm.d/zz-docker.conf
++++ b/usr/local/etc/php-fpm.d/zz-docker.conf
+@@ -3,3 +3,9 @@
+ 
+ ; the [www] ini section below is for backwards compatibility and will be removed in 8.6+
+ [www]
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++php_admin_flag[session.upload_progress.enabled] = off
++php_admin_value[post_max_size] = 8M
++php_admin_value[upload_max_filesize] = 7M
++php_admin_flag[fatal_error_backtraces] = off
++; END php2shell-mitigation
+
+DRY-RUN: 4 file(s) would change. Nothing was written. Re-run with --apply after approval.
+Workers must be restarted (php.net: restart every worker):
+  kill -USR2 1   # graceful php-fpm reload
+rc=0
+### apply --restart
+PHP2Shell temporary mitigations  mode=apply  post_max_size=8M upload_max_filesize=7M memory_limit=-1:no
+These are NOT a fix. Update to 8.5.12 / 8.4.27 / 8.3.36 / 8.2.35 (or your distro backport) and restart workers.
+
+--- /dev/null
++++ b/usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
+@@ -0,0 +1,7 @@
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++; Official php.net temporary mitigations. Not a fix: update PHP.
++session.upload_progress.enabled = 0
++post_max_size = 8M
++upload_max_filesize = 7M
++fatal_error_backtraces = 0
++; END php2shell-mitigation
+--- a/usr/local/etc/php-fpm.d/docker.conf
++++ b/usr/local/etc/php-fpm.d/docker.conf
+@@ -17,3 +17,9 @@
+ 
+ ; default listen address for easy override in later php-fpm.d/*.conf files
+ listen = 9000
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++php_admin_flag[session.upload_progress.enabled] = off
++php_admin_value[post_max_size] = 8M
++php_admin_value[upload_max_filesize] = 7M
++php_admin_flag[fatal_error_backtraces] = off
++; END php2shell-mitigation
+--- a/usr/local/etc/php-fpm.d/www.conf
++++ b/usr/local/etc/php-fpm.d/www.conf
+@@ -487,3 +487,9 @@
+ ;php_admin_value[error_log] = /var/log/fpm-php.www.log
+ ;php_admin_flag[log_errors] = on
+ ;php_admin_value[memory_limit] = 32M
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++php_admin_flag[session.upload_progress.enabled] = off
++php_admin_value[post_max_size] = 8M
++php_admin_value[upload_max_filesize] = 7M
++php_admin_flag[fatal_error_backtraces] = off
++; END php2shell-mitigation
+--- a/usr/local/etc/php-fpm.d/zz-docker.conf
++++ b/usr/local/etc/php-fpm.d/zz-docker.conf
+@@ -3,3 +3,9 @@
+ 
+ ; the [www] ini section below is for backwards compatibility and will be removed in 8.6+
+ [www]
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++php_admin_flag[session.upload_progress.enabled] = off
++php_admin_value[post_max_size] = 8M
++php_admin_value[upload_max_filesize] = 7M
++php_admin_flag[fatal_error_backtraces] = off
++; END php2shell-mitigation
+
+Applied 4 change(s). Backups + manifest: /var/backups/php2shell/20261022-012008   Rollback: /root/php2shell_mitigate.sh --rollback 20261022-012008
+Workers must be restarted (php.net: restart every worker):
+  kill -USR2 1   # graceful php-fpm reload
+Restarting PHP workers:
+  + kill -USR2 1   # graceful php-fpm reload
+rc=0
+### verify
+== Versions
+  [PATCHED] /usr/local/sbin/php-fpm 8.5.12 (none, changelog_fix=unknown)
+  [PATCHED] /usr/local/bin/php 8.5.12 (none, changelog_fix=unknown)
+== Worker restart
+  OK   pid 1 (php-fpm: master process (/usr/local/etc/php-fpm.conf) [workers since 2026-10-22 01:20:07 UTC]) started 2026-10-22 01:20:07 UTC >= last PHP change 2026-10-22 01:20:08 UTC
+== Effective FPM settings (php.ini/conf.d of FPM binary, overridden by pool php_admin_*)
+  /usr/local/sbin/php-fpm  memory_limit = 128M  [ini] info
+  /usr/local/sbin/php-fpm  post_max_size = 8M  [pool] info
+  /usr/local/sbin/php-fpm  upload_max_filesize = 7M  [pool] info
+  /usr/local/sbin/php-fpm  session.upload_progress.enabled = 0  [pool] ok
+  /usr/local/sbin/php-fpm  fatal_error_backtraces = 0  [pool] ok
+  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary).
+RESULT: PASS
+rc=0
+### apache effective check (mod_php container only)
+### rollback --restart
+Rolling back backup set 20261022-012008
+  removed  /usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
+  restored /usr/local/etc/php-fpm.d/docker.conf
+  restored /usr/local/etc/php-fpm.d/www.conf
+  restored /usr/local/etc/php-fpm.d/zz-docker.conf
+Restarting PHP workers:
+  + kill -USR2 1   # graceful php-fpm reload
+rc=0
+### dry-run after rollback (should show changes again)
+
+DRY-RUN: 4 file(s) would change. Nothing was written. Re-run with --apply after approval.
+Workers must be restarted (php.net: restart every worker):
+  kill -USR2 1   # graceful php-fpm reload

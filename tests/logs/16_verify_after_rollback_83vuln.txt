@@ -1,0 +1,13 @@
+== Versions
+  [VULNERABLE] /usr/local/sbin/php-fpm 8.3.35 (none, changelog_fix=unknown)
+  [VULNERABLE] /usr/local/bin/php 8.3.35 (none, changelog_fix=unknown)
+== Worker restart
+  OK   pid 1 (php-fpm: master process (/usr/local/etc/php-fpm.conf) [workers since 2026-10-22 01:19:32 UTC]) started 2026-10-22 01:19:32 UTC >= last PHP change 2026-10-22 01:19:03 UTC
+== Effective FPM settings (php.ini/conf.d of FPM binary, overridden by pool php_admin_*)
+  /usr/local/sbin/php-fpm  memory_limit = 128M  [ini] info
+  /usr/local/sbin/php-fpm  post_max_size = 8M  [ini] info
+  /usr/local/sbin/php-fpm  upload_max_filesize = 2M  [ini] info
+  /usr/local/sbin/php-fpm  session.upload_progress.enabled = On  [ini] EXPOSED
+  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary).
+RESULT: FAIL
+rc=1

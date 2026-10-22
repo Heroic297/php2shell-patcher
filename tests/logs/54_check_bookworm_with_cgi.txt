@@ -1,0 +1,18 @@
+PHP2Shell check v1.0.0  (CVE-2026-109618 / CVE-2026-109619)  read-only
+Fixed: 8.2.35  8.3.36  8.4.27  8.5.12   (8.1 and older: unsupported)
+Target: host:df547582efb1    SAPIs: fpm(running)
+
+[PATCHED    ] host:df547582efb1  /usr/sbin/php-fpm8.2  (8.2.35)
+              sapi=fpm package=deb:php8.2-fpm=8.2.35-1~deb12u1 changelog_fix=yes
+              memory_limit=128M post_max_size=8M upload_max_filesize=2M session.upload_progress.enabled=On fatal_error_backtraces=n/a 
+[PATCHED    ] host:df547582efb1  /usr/bin/php8.2  (8.2.35)
+              sapi=cli package=deb:php8.2-cli=8.2.35-1~deb12u1 changelog_fix=yes
+              memory_limit=-1 post_max_size=8M upload_max_filesize=2M session.upload_progress.enabled=1 fatal_error_backtraces=n/a 
+[PATCHED    ] host:df547582efb1  /usr/bin/php-cgi8.2  (8.2.35)
+              sapi=cgi package=deb:php8.2-cgi=8.2.35-1~deb12u1 changelog_fix=yes
+              memory_limit=128M post_max_size=8M upload_max_filesize=2M session.upload_progress.enabled=On fatal_error_backtraces=n/a 
+[PATCHED    ] host:df547582efb1  /usr/lib/cgi-bin/php8.2  (8.2.35)
+              sapi=cgi package=deb:php8.2-cgi=8.2.35-1~deb12u1 changelog_fix=yes
+
+Overall: all detected installs PATCHED. Confirm workers were restarted (php2shell_verify.sh).
+Also check vendor products bundling PHP: https://github.com/NCSC-NL/php2shell

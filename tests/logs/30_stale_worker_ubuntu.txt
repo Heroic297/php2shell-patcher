@@ -1,0 +1,28 @@
+### simulate apt upgrade: replace /usr/sbin/php-fpm8.3 with a new inode (old binary now deleted in memory)
+== Versions
+  [PATCHED] /usr/sbin/php-fpm8.3 8.3.6 (deb:php8.3-fpm=8.3.6-0ubuntu0.24.04.13, changelog_fix=yes(backport))
+  [PATCHED] /usr/bin/php8.3 8.3.6 (deb:php8.3-cli=8.3.6-0ubuntu0.24.04.13, changelog_fix=yes(backport))
+== Worker restart
+  FAIL pid 1 php-fpm8.3 runs a DELETED binary (old version still in memory) -> restart it
+== Effective FPM settings (php.ini/conf.d of FPM binary, overridden by pool php_admin_*)
+  /usr/sbin/php-fpm8.3  memory_limit = 128M  [ini] info
+  /usr/sbin/php-fpm8.3  post_max_size = 8M  [ini] info
+  /usr/sbin/php-fpm8.3  upload_max_filesize = 2M  [ini] info
+  /usr/sbin/php-fpm8.3  session.upload_progress.enabled = On  [ini] EXPOSED
+  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary).
+RESULT: FAIL
+rc=1
+### graceful reload (kill -USR2 1)
+== Versions
+  [PATCHED] /usr/sbin/php-fpm8.3 8.3.6 (deb:php8.3-fpm=8.3.6-0ubuntu0.24.04.13, changelog_fix=yes(backport))
+  [PATCHED] /usr/bin/php8.3 8.3.6 (deb:php8.3-cli=8.3.6-0ubuntu0.24.04.13, changelog_fix=yes(backport))
+== Worker restart
+  OK   pid 1 (php-fpm: master process (/etc/php/8.3/fpm/php-fpm.conf) [workers since 2026-10-22 01:19:55 UTC]) started 2026-10-22 01:19:55 UTC >= last PHP change 2026-10-22 01:19:51 UTC
+== Effective FPM settings (php.ini/conf.d of FPM binary, overridden by pool php_admin_*)
+  /usr/sbin/php-fpm8.3  memory_limit = 128M  [ini] info
+  /usr/sbin/php-fpm8.3  post_max_size = 8M  [ini] info
+  /usr/sbin/php-fpm8.3  upload_max_filesize = 2M  [ini] info
+  /usr/sbin/php-fpm8.3  session.upload_progress.enabled = On  [ini] EXPOSED
+  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary).
+RESULT: PASS
+rc=0

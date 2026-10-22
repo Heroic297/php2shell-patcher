@@ -1,0 +1,49 @@
+PHP2Shell temporary mitigations  mode=dry  post_max_size=8M upload_max_filesize=7M memory_limit=-1:no
+These are NOT a fix. Update to 8.5.12 / 8.4.27 / 8.3.36 / 8.2.35 (or your distro backport) and restart workers.
+
+--- /dev/null
++++ b/usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
+@@ -0,0 +1,6 @@
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++; Official php.net temporary mitigations. Not a fix: update PHP.
++session.upload_progress.enabled = 0
++post_max_size = 8M
++upload_max_filesize = 7M
++; END php2shell-mitigation
+--- a/usr/local/etc/php-fpm.d/docker.conf
++++ b/usr/local/etc/php-fpm.d/docker.conf
+@@ -17,3 +17,8 @@
+ 
+ ; default listen address for easy override in later php-fpm.d/*.conf files
+ listen = 9000
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++php_admin_flag[session.upload_progress.enabled] = off
++php_admin_value[post_max_size] = 8M
++php_admin_value[upload_max_filesize] = 7M
++; END php2shell-mitigation
+--- a/usr/local/etc/php-fpm.d/www.conf
++++ b/usr/local/etc/php-fpm.d/www.conf
+@@ -488,3 +488,8 @@
+ ;php_admin_value[error_log] = /var/log/fpm-php.www.log
+ ;php_admin_flag[log_errors] = on
+ ;php_admin_value[memory_limit] = 32M
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++php_admin_flag[session.upload_progress.enabled] = off
++php_admin_value[post_max_size] = 8M
++php_admin_value[upload_max_filesize] = 7M
++; END php2shell-mitigation
+--- a/usr/local/etc/php-fpm.d/zz-docker.conf
++++ b/usr/local/etc/php-fpm.d/zz-docker.conf
+@@ -3,3 +3,8 @@
+ 
+ ; the [www] ini section below is for backwards compatibility and will be removed in 8.6+
+ [www]
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++php_admin_flag[session.upload_progress.enabled] = off
++php_admin_value[post_max_size] = 8M
++php_admin_value[upload_max_filesize] = 7M
++; END php2shell-mitigation
+
+DRY-RUN: 4 file(s) would change. Nothing was written. Re-run with --apply after approval.
+Workers must be restarted (php.net: restart every worker):
+  kill -USR2 1   # graceful php-fpm reload

@@ -1,0 +1,65 @@
+### t-81apache dry-run
+PHP2Shell temporary mitigations  mode=dry  post_max_size=8M upload_max_filesize=7M memory_limit=-1:no
+These are NOT a fix. Update to 8.5.12 / 8.4.27 / 8.3.36 / 8.2.35 (or your distro backport) and restart workers.
+
+--- /dev/null
++++ b/usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
+@@ -0,0 +1,6 @@
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++; Official php.net temporary mitigations. Not a fix: update PHP.
++session.upload_progress.enabled = 0
++post_max_size = 8M
++upload_max_filesize = 7M
++; END php2shell-mitigation
+
+DRY-RUN: 1 file(s) would change. Nothing was written. Re-run with --apply after approval.
+Workers must be restarted (php.net: restart every worker):
+  apachectl -k graceful
+rc=0
+### apply --restart
+PHP2Shell temporary mitigations  mode=apply  post_max_size=8M upload_max_filesize=7M memory_limit=-1:no
+These are NOT a fix. Update to 8.5.12 / 8.4.27 / 8.3.36 / 8.2.35 (or your distro backport) and restart workers.
+
+--- /dev/null
++++ b/usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
+@@ -0,0 +1,6 @@
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++; Official php.net temporary mitigations. Not a fix: update PHP.
++session.upload_progress.enabled = 0
++post_max_size = 8M
++upload_max_filesize = 7M
++; END php2shell-mitigation
+
+Applied 1 change(s). Backups + manifest: /var/backups/php2shell/20261022-012014   Rollback: /root/php2shell_mitigate.sh --rollback 20261022-012014
+Workers must be restarted (php.net: restart every worker):
+  apachectl -k graceful
+Restarting PHP workers:
+  + apachectl -k graceful
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.17.0.6. Set the 'ServerName' directive globally to suppress this message
+rc=0
+### verify
+== Versions
+  [UNSUPPORTED] /usr/local/bin/php 8.1.34 (none, changelog_fix=unknown)
+  [UNSUPPORTED] /usr/lib/apache2/modules/libphp.so 8.1.34 (none, changelog_fix=unknown)
+== Worker restart
+  OK   pid 1 (apache2 -DFOREGROUND [workers since 2026-10-22 01:20:13 UTC]) started 2026-10-22 01:20:13 UTC >= last PHP change 2026-10-22 01:20:14 UTC
+== Effective FPM settings (php.ini/conf.d of FPM binary, overridden by pool php_admin_*)
+  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary).
+RESULT: FAIL
+rc=1
+### apache effective check (mod_php container only)
+session.upload_progress.enabled=0
+post_max_size=8M
+upload_max_filesize=7M
+### rollback --restart
+Rolling back backup set 20261022-012014
+  removed  /usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
+Restarting PHP workers:
+  + apachectl -k graceful
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.17.0.6. Set the 'ServerName' directive globally to suppress this message
+rc=0
+### dry-run after rollback (should show changes again)
+
+DRY-RUN: 1 file(s) would change. Nothing was written. Re-run with --apply after approval.
+Workers must be restarted (php.net: restart every worker):
+  apachectl -k graceful
