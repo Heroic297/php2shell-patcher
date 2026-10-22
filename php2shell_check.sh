@@ -5,7 +5,7 @@
 # Exit: 0 all PATCHED, 1 any VULNERABLE/UNSUPPORTED, 2 only UNKNOWN/none found.
 set -u
 LC_ALL=C; export LC_ALL
-VERSION="1.0.0"
+VERSION="1.1.0"
 FIXED_82=35; FIXED_83=36; FIXED_84=27; FIXED_85=12
 CVE_A="109618"; CVE_B="109619"
 JSON=0; DOCKER=1; RECORDS=0; LABEL="host:$(hostname 2>/dev/null || echo unknown)"
@@ -40,7 +40,11 @@ verdict_for_version() {
 }
 
 php_version_of() { # binary -> X.Y.Z (php -v output; never executes user scripts)
-  "$1" -n -v 2>/dev/null | sed -n '1s/^PHP \([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p'
+  local v
+  v=$("$1" -n -v 2>/dev/null | sed -n '1s/^PHP \([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p')
+  # lsphp rejects -n (prints usage); plain -v only prints the version banner
+  [ -z "$v" ] && v=$("$1" -v 2>/dev/null </dev/null | sed -n '1s/^PHP \([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p')
+  printf '%s' "$v"
 }
 
 # Package owning a file + whether its changelog mentions both CVE ids (distro backport).
@@ -82,6 +86,11 @@ ini_of_bin() { # binary -> "k=v;k=v" from the binary's own ini (CLI/FPM php.ini 
       local info; info=$("$b" -i 2>/dev/null | sed -e 's/<[^>]*>/ /g' -e 's/&quot;//g')   # php-cgi -i prints HTML
       for k in $INI_KEYS; do
         v=$(printf '%s\n' "$info" | awk -v k="$k" '$1==k { print ($2=="=>" ? $3 : $2); exit }')
+        out="$out$k=${v:-n/a};"
+      done ;;
+    frankenphp) # embedded PHP reads the same php.ini / conf.d as the server
+      for k in $INI_KEYS; do
+        v=$("$b" php-cli -r "\$x=ini_get('$k'); echo \$x===false?'n/a':\$x;" 2>/dev/null | head -1)
         out="$out$k=${v:-n/a};"
       done ;;
     *)
@@ -137,7 +146,7 @@ detect_sapis() {
 
 find_binaries() {
   local d f seen=" "
-  for d in $(printf '%s' "$PATH" | tr ':' ' ') /usr/bin /usr/sbin /usr/local/bin /usr/local/sbin /usr/lib/cgi-bin /opt/*/bin /opt/*/root/usr/bin /opt/*/root/usr/sbin /opt/cpanel/ea-php*/root/usr/bin /opt/cpanel/ea-php*/root/usr/sbin /usr/local/lsws/lsphp*/bin; do
+  for d in $(printf '%s' "$PATH" | tr ':' ' ') /usr/bin /usr/sbin /usr/local/bin /usr/local/sbin /usr/lib/cgi-bin /opt/*/bin /opt/*/root/usr/bin /opt/*/root/usr/sbin /opt/remi/*/root/usr/bin /opt/remi/*/root/usr/sbin /opt/cpanel/ea-php*/root/usr/bin /opt/cpanel/ea-php*/root/usr/sbin /usr/local/lsws/lsphp*/bin; do
     [ -d "$d" ] || continue
     for f in "$d"/php "$d"/php[0-9]* "$d"/php-fpm* "$d"/php-cgi* "$d"/lsphp* "$d"/frankenphp; do
       { [ -x "$f" ] && [ -f "$f" ]; } || continue
@@ -166,7 +175,7 @@ scan_local() {
     pkg=$(pkg_of "$b"); bp=$(changelog_has_fix "$pkg")
     verdict=$(verdict_for_version "${v:-x}")
     if [ "$bp" = yes ] && [ "$verdict" != PATCHED ]; then verdict="PATCHED"; bp="yes(backport)"; fi
-    ini=""; [ "$kind" = frankenphp ] || ini=$(ini_of_bin "$b" "$kind")
+    ini=$(ini_of_bin "$b" "$kind")
     add_rec "$LABEL|$b|${v:-?}|$kind|$pkg|$bp|$verdict|$ini"
   done <<EOT
 $(find_binaries)

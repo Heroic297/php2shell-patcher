@@ -32,7 +32,7 @@ newest_change() { # newest mtime among a PHP binary, its package list file, conf
   local b="$1" t m f
   t=$(stat -c %Y "$b" 2>/dev/null || echo 0)
   for f in /var/lib/dpkg/info/php*.list /etc/php /usr/local/etc/php /usr/local/etc/php-fpm.d /etc/php.d /etc/php-fpm.d \
-           /etc/php/*/fpm/conf.d/* /etc/php/*/fpm/pool.d/* /usr/local/etc/php/conf.d/* /usr/local/etc/php-fpm.d/* /etc/php.d/* /etc/php-fpm.d/*; do
+           /etc/php/*/fpm/conf.d/* /etc/php/*/fpm/pool.d/* /usr/local/etc/php/conf.d/* /usr/local/etc/php-fpm.d/* /etc/php.d/* /etc/php-fpm.d/* /etc/opt/remi/*/php.d/* /etc/opt/remi/*/php-fpm.d/*; do
     [ -e "$f" ] || continue; m=$(stat -c %Y "$f" 2>/dev/null || echo 0); [ "$m" -gt "$t" ] && t=$m
   done
   if have_rpm=$(command -v rpm) && [ -n "$have_rpm" ]; then
@@ -62,13 +62,21 @@ for d in /proc/[0-9]*; do
     say "  FAIL pid $pid ($cmd) started $(fmt "${st:-0}") BEFORE last PHP change $(fmt "$ch") -> restart it"; fail=1
   fi
 done
+if [ "$fail" = 1 ] && printf '%s' "$out" | grep -q -- '-> restart it'; then
+  say "  fix: sudo php2shell_mitigate.sh --restart-only   (php-fpm/apache/LiteSpeed via systemctl or graceful signal; FrankenPHP: restart its service or container)"
+fi
+if [ "$found" = 0 ] && grep -qsxE 'litespeed|lshttpd|openlitespeed' /proc/[0-9]*/comm; then
+  say "  OK   LiteSpeed is running with no lsphp workers alive; lsphp starts on demand with the current binary and php.ini"; found=1
+fi
 [ "$found" = 0 ] && { say "  no running PHP worker processes found (nothing serving, or SAPI not detected)"; warn=1; }
 
 # 3. effective FPM settings
-say "== Effective FPM settings (php.ini/conf.d of FPM binary, overridden by pool php_admin_*)"
+say "== Effective settings (FPM: php.ini/conf.d overridden by pool php_admin_*; LiteSpeed/FrankenPHP: php.ini/conf.d)"
 KEYS="memory_limit post_max_size upload_max_filesize session.upload_progress.enabled fatal_error_backtraces"
-for b in /usr/sbin/php-fpm* /usr/local/sbin/php-fpm /usr/sbin/php-fpm; do
-  [ -x "$b" ] || continue
+fpm_seen=" "
+for b in /usr/sbin/php-fpm* /usr/local/sbin/php-fpm /opt/remi/*/root/usr/sbin/php-fpm /opt/cpanel/ea-php*/root/usr/sbin/php-fpm; do
+  { [ -x "$b" ] && [ -f "$b" ]; } || continue
+  r=$(readlink -f "$b"); case "$fpm_seen" in *" $r "*) continue;; esac; fpm_seen="$fpm_seen$r "
   ver=$("$b" -n -v 2>/dev/null | sed -n '1s/^PHP \([0-9]\.[0-9]\).*/\1/p')
   info=$("$b" -i 2>/dev/null)
   cfg=$("$b" -tt 2>&1 | sed -n 's/.*NOTICE:[[:space:]]*//p')   # parsed pool config, as FPM sees it
@@ -86,6 +94,16 @@ for b in /usr/sbin/php-fpm* /usr/local/sbin/php-fpm /usr/sbin/php-fpm; do
     [ "$st" = EXPOSED ] && warn=1
   done
 done
+# LiteSpeed lsphp / FrankenPHP: no pools; their -i / php-cli view of php.ini+conf.d is what workers load
+while IFS='|' read -r src bin ver kind _ _ _ ini; do
+  case "$kind" in litespeed|frankenphp) ;; *) continue;; esac
+  case "$ini" in *session.upload_progress.enabled=*) ;; *) continue;; esac
+  up=$(printf '%s' "$ini" | tr ';' '\n' | sed -n 's/^session.upload_progress.enabled=//p')
+  case "$up" in 0|Off|off|"") st=ok;; *) st=EXPOSED; warn=1;; esac
+  say "  $bin ($kind) $(printf '%s' "$ini" | tr ';' ' ') [ini] upload_progress:$st"
+done <<EOT
+$recs
+EOT
 say "  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary)."
 
 if [ $fail = 1 ]; then res=FAIL; rc=1; elif [ $warn = 1 ]; then res=CHECK; rc=2; else res=PASS; rc=0; fi

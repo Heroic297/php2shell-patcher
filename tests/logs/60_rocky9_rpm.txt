@@ -1,0 +1,83 @@
+### check (rc)
+rc=1
+ACTION_REQUIRED [('/usr/sbin/php-fpm', '8.2.33', 'VULNERABLE'), ('/usr/bin/php', '8.2.33', 'VULNERABLE'), ('/usr/bin/php-cgi', '8.2.33', 'VULNERABLE')]
+### dry
+PHP2Shell temporary mitigations  mode=dry  post_max_size=8M upload_max_filesize=7M memory_limit=-1:no
+These are NOT a fix. Update to 8.5.12 / 8.4.27 / 8.3.36 / 8.2.35 (or your distro backport) and restart workers.
+
+--- a/etc/php.d/zz-php2shell-mitigation.ini  (diff not installed; showing lines added by this change)
++++ b/etc/php.d/zz-php2shell-mitigation.ini
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++; Official php.net temporary mitigations. Not a fix: update PHP.
++session.upload_progress.enabled = 0
++post_max_size = 8M
++upload_max_filesize = 7M
++; END php2shell-mitigation
+--- a/etc/php-fpm.d/www.conf  (diff not installed; showing lines added by this change)
++++ b/etc/php-fpm.d/www.conf
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++php_admin_flag[session.upload_progress.enabled] = off
++php_admin_value[post_max_size] = 8M
++php_admin_value[upload_max_filesize] = 7M
++; END php2shell-mitigation
+
+DRY-RUN: 2 file(s) would change. Nothing was written. Re-run with --apply after approval.
+Workers must be restarted (php.net: restart every worker):
+  kill -USR2 1   # graceful php-fpm reload
+ls: cannot access '/var/backups/php2shell': No such file or directory
+### apply+restart
+PHP2Shell temporary mitigations  mode=apply  post_max_size=8M upload_max_filesize=7M memory_limit=-1:no
+These are NOT a fix. Update to 8.5.12 / 8.4.27 / 8.3.36 / 8.2.35 (or your distro backport) and restart workers.
+
+--- a/etc/php.d/zz-php2shell-mitigation.ini  (diff not installed; showing lines added by this change)
++++ b/etc/php.d/zz-php2shell-mitigation.ini
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++; Official php.net temporary mitigations. Not a fix: update PHP.
++session.upload_progress.enabled = 0
++post_max_size = 8M
++upload_max_filesize = 7M
++; END php2shell-mitigation
+--- a/etc/php-fpm.d/www.conf  (diff not installed; showing lines added by this change)
++++ b/etc/php-fpm.d/www.conf
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++php_admin_flag[session.upload_progress.enabled] = off
++php_admin_value[post_max_size] = 8M
++php_admin_value[upload_max_filesize] = 7M
++; END php2shell-mitigation
+
+Applied 2 change(s). Backups + manifest: /var/backups/php2shell/20261022-014203   Rollback: php2shell_mitigate.sh --rollback 20261022-014203
+Workers must be restarted (php.net: restart every worker):
+  kill -USR2 1   # graceful php-fpm reload
+Restarting PHP workers:
+  + kill -USR2 1   # graceful php-fpm reload
+### idempotent dry
+unchanged: /etc/php.d/zz-php2shell-mitigation.ini
+unchanged: /etc/php-fpm.d/www.conf
+
+Nothing to change (mitigations already present or no PHP config found).
+### verify
+== Versions
+  [VULNERABLE] /usr/sbin/php-fpm 8.2.33 (rpm:php-fpm-8.2.33-1.module+el9.8.0+40305+0c876ebe.x86_64, changelog_fix=no)
+  [VULNERABLE] /usr/bin/php 8.2.33 (rpm:php-cli-8.2.33-1.module+el9.8.0+40305+0c876ebe.x86_64, changelog_fix=no)
+  [VULNERABLE] /usr/bin/php-cgi 8.2.33 (rpm:php-cli-8.2.33-1.module+el9.8.0+40305+0c876ebe.x86_64, changelog_fix=no)
+== Worker restart
+  OK   pid 1 (php-fpm: master process (/etc/php-fpm.conf) [workers since 2026-10-22 01:42:03 UTC]) started 2026-10-22 01:42:03 UTC >= last PHP change 2026-10-22 01:42:03 UTC
+== Effective FPM settings (php.ini/conf.d of FPM binary, overridden by pool php_admin_*)
+  /usr/sbin/php-fpm  memory_limit = 128M  [ini] info
+  /usr/sbin/php-fpm  post_max_size = 8M  [pool] info
+  /usr/sbin/php-fpm  upload_max_filesize = 7M  [pool] info
+  /usr/sbin/php-fpm  session.upload_progress.enabled = 0  [pool] ok
+  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary).
+RESULT: FAIL
+rc=1
+### rollback
+Rolling back backup set 20261022-014203
+  removed  /etc/php.d/zz-php2shell-mitigation.ini
+  restored /etc/php-fpm.d/www.conf
+Restarting PHP workers:
+  + kill -USR2 1   # graceful php-fpm reload
+  OK   pid 1 (php-fpm: master process (/etc/php-fpm.conf) [workers since 2026-10-22 01:42:05 UTC]) started 2026-10-22 01:42:05 UTC >= last PHP change 2026-10-22 01:42:06 UTC
+  /usr/sbin/php-fpm  session.upload_progress.enabled = On  [ini] EXPOSED
+RESULT: FAIL
+0
+0

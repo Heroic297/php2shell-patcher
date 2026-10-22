@@ -1,0 +1,67 @@
+##### php:8.3.35-fpm
+[VULNERABLE ] host:3c61c489d4bf  /usr/local/sbin/php-fpm  (8.3.35)
+[VULNERABLE ] host:3c61c489d4bf  /usr/local/bin/php  (8.3.35)
+Overall: ACTION REQUIRED. Update to a fixed release or your distro's backport and restart every worker. 8.1 and older: take offline or use a vendor LTS backport. Temporary mitigations: php2shell_mitigate.sh (dry-run by default).
++++ b/usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
++++ b/usr/local/etc/php-fpm.d/docker.conf
++++ b/usr/local/etc/php-fpm.d/www.conf
++++ b/usr/local/etc/php-fpm.d/zz-docker.conf
+Applied 4 change(s). Backups + manifest: /var/backups/php2shell/20261022-014934   Rollback: php2shell_mitigate.sh --rollback 20261022-014934
+  + kill -USR2 1   # graceful php-fpm reload
+  OK   pid 1 (php-fpm: master process (/usr/local/etc/php-fpm.conf) [workers since 2026-10-22 01:49:34 UTC]) started 2026-10-22 01:49:34 UTC >= last PHP change 2026-10-22 01:49:35 UTC
+RESULT: FAIL
+Nothing to change (mitigations already present or no PHP config found).
+4
+##### php:8.5.12-fpm
+[PATCHED    ] host:3dc23efbd0d8  /usr/local/sbin/php-fpm  (8.5.12)
+[PATCHED    ] host:3dc23efbd0d8  /usr/local/bin/php  (8.5.12)
+Overall: all detected installs PATCHED. Confirm workers were restarted (php2shell_verify.sh).
++++ b/usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
++++ b/usr/local/etc/php-fpm.d/docker.conf
++++ b/usr/local/etc/php-fpm.d/www.conf
++++ b/usr/local/etc/php-fpm.d/zz-docker.conf
+Applied 4 change(s). Backups + manifest: /var/backups/php2shell/20261022-014941   Rollback: php2shell_mitigate.sh --rollback 20261022-014941
+  + kill -USR2 1   # graceful php-fpm reload
+  OK   pid 1 (php-fpm: master process (/usr/local/etc/php-fpm.conf) [workers since 2026-10-22 01:49:40 UTC]) started 2026-10-22 01:49:40 UTC >= last PHP change 2026-10-22 01:49:41 UTC
+RESULT: PASS
+Nothing to change (mitigations already present or no PHP config found).
+4
+##### php:8.1-apache
+[UNSUPPORTED] host:6bb9243d43e0  /usr/local/bin/php  (8.1.34)
+[UNSUPPORTED] host:6bb9243d43e0  /usr/lib/apache2/modules/libphp.so  (8.1.34)
+Overall: ACTION REQUIRED. Update to a fixed release or your distro's backport and restart every worker. 8.1 and older: take offline or use a vendor LTS backport. Temporary mitigations: php2shell_mitigate.sh (dry-run by default).
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.17.0.10. Set the 'ServerName' directive globally to suppress this message
++++ b/usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
+Applied 1 change(s). Backups + manifest: /var/backups/php2shell/20261022-014947   Rollback: php2shell_mitigate.sh --rollback 20261022-014947
+  + apachectl -k graceful
+  OK   pid 1 (apache2 -DFOREGROUND [workers since 2026-10-22 01:49:46 UTC]) started 2026-10-22 01:49:46 UTC >= last PHP change 2026-10-22 01:49:47 UTC
+RESULT: FAIL
+Nothing to change (mitigations already present or no PHP config found).
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.17.0.10. Set the 'ServerName' directive globally to suppress this message
+1
+##### p2s-ubuntu
+[PATCHED    ] host:ffb513651ff8  /usr/sbin/php-fpm8.3  (8.3.6)
+[PATCHED    ] host:ffb513651ff8  /usr/bin/php8.3  (8.3.6)
+Overall: all detected installs PATCHED. Confirm workers were restarted (php2shell_verify.sh).
++++ b/etc/php/8.3/fpm/conf.d/zz-php2shell-mitigation.ini
++++ b/etc/php/8.3/cli/conf.d/zz-php2shell-mitigation.ini
++++ b/etc/php/8.3/fpm/pool.d/www.conf
+Applied 3 change(s). Backups + manifest: /var/backups/php2shell/20261022-014953   Rollback: php2shell_mitigate.sh --rollback 20261022-014953
+  + kill -USR2 1   # graceful php-fpm reload
+  OK   pid 1 (php-fpm: master process (/etc/php/8.3/fpm/php-fpm.conf) [workers since 2026-10-22 01:49:52 UTC]) started 2026-10-22 01:49:52 UTC >= last PHP change 2026-10-22 01:49:53 UTC
+RESULT: PASS
+Nothing to change (mitigations already present or no PHP config found).
+3
+##### p2s-bookworm
+[PATCHED    ] host:86122e47f0a1  /usr/sbin/php-fpm8.2  (8.2.35)
+[PATCHED    ] host:86122e47f0a1  /usr/bin/php8.2  (8.2.35)
+Overall: all detected installs PATCHED. Confirm workers were restarted (php2shell_verify.sh).
++++ b/etc/php/8.2/fpm/conf.d/zz-php2shell-mitigation.ini
++++ b/etc/php/8.2/cli/conf.d/zz-php2shell-mitigation.ini
++++ b/etc/php/8.2/fpm/pool.d/www.conf
+Applied 3 change(s). Backups + manifest: /var/backups/php2shell/20261022-014959   Rollback: php2shell_mitigate.sh --rollback 20261022-014959
+  + kill -USR2 1   # graceful php-fpm reload
+  OK   pid 1 (php-fpm: master process (/etc/php/8.2/fpm/php-fpm.conf) [workers since 2026-10-22 01:49:58 UTC]) started 2026-10-22 01:49:58 UTC >= last PHP change 2026-10-22 01:49:59 UTC
+RESULT: PASS
+Nothing to change (mitigations already present or no PHP config found).
+3

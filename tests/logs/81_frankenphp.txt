@@ -1,0 +1,128 @@
+############ p2s-fk85 (dunglas/frankenphp:latest)
+### check
+PHP2Shell check v1.1.0  (CVE-2026-109618 / CVE-2026-109619)  read-only
+Fixed: 8.2.35  8.3.36  8.4.27  8.5.12   (8.1 and older: unsupported)
+Target: host:666c2cdaca7e    SAPIs: frankenphp(running)
+
+[PATCHED    ] host:666c2cdaca7e  /usr/local/bin/php  (8.5.12)
+              sapi=cli package=none changelog_fix=unknown
+              memory_limit=128M post_max_size=8M upload_max_filesize=2M session.upload_progress.enabled=1 fatal_error_backtraces=1 
+[PATCHED    ] host:666c2cdaca7e  /usr/local/bin/php-cgi  (8.5.12)
+              sapi=cgi package=none changelog_fix=unknown
+              memory_limit=128M post_max_size=8M upload_max_filesize=2M session.upload_progress.enabled=On fatal_error_backtraces=On 
+[PATCHED    ] host:666c2cdaca7e  /usr/local/bin/frankenphp  (8.5.12)
+              sapi=frankenphp package=none changelog_fix=unknown
+              memory_limit=128M post_max_size=8M upload_max_filesize=2M session.upload_progress.enabled=1 fatal_error_backtraces=1 
+
+Overall: all detected installs PATCHED. Confirm workers were restarted (php2shell_verify.sh).
+Also check vendor products bundling PHP: https://github.com/NCSC-NL/php2shell
+rc=0
+### dry
+@@ -0,0 +1,7 @@
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++; Official php.net temporary mitigations. Not a fix: update PHP.
++session.upload_progress.enabled = 0
++post_max_size = 8M
++upload_max_filesize = 7M
++fatal_error_backtraces = 0
++; END php2shell-mitigation
+
+DRY-RUN: 1 file(s) would change. Nothing was written. Re-run with --apply after approval.
+Workers must be restarted (php.net: restart every worker):
+  # FrankenPHP runs PHP inside its own process: restart it fully (systemctl restart frankenphp, docker restart <container>, or stop and re-run 'frankenphp run'). Not done automatically.
+### apply --restart
+Applied 1 change(s). Backups + manifest: /var/backups/php2shell/20261022-014741   Rollback: php2shell_mitigate.sh --rollback 20261022-014741
+Workers must be restarted (php.net: restart every worker):
+  # FrankenPHP runs PHP inside its own process: restart it fully (systemctl restart frankenphp, docker restart <container>, or stop and re-run 'frankenphp run'). Not done automatically.
+Restarting PHP workers:
+  note: FrankenPHP runs PHP inside its own process: restart it fully (systemctl restart frankenphp, docker restart <container>, or stop and re-run 'frankenphp run'). Not done automatically.
+### verify (before container restart)
+== Versions
+  [PATCHED] /usr/local/bin/php 8.5.12 (none, changelog_fix=unknown)
+  [PATCHED] /usr/local/bin/php-cgi 8.5.12 (none, changelog_fix=unknown)
+  [PATCHED] /usr/local/bin/frankenphp 8.5.12 (none, changelog_fix=unknown)
+== Worker restart
+  FAIL pid 1 (frankenphp run --config /etc/frankenphp/Caddyfile --adapter caddyfile ) started 2026-10-22 01:47:34 UTC BEFORE last PHP change 2026-10-22 01:47:41 UTC -> restart it
+  fix: sudo php2shell_mitigate.sh --restart-only   (restarts php-fpm/apache via systemctl or graceful signal)
+== Effective settings (FPM: php.ini/conf.d overridden by pool php_admin_*; LiteSpeed/FrankenPHP: php.ini/conf.d)
+  /usr/local/bin/frankenphp (frankenphp) memory_limit=128M post_max_size=8M upload_max_filesize=7M session.upload_progress.enabled=0 fatal_error_backtraces=0  [ini] upload_progress:ok
+  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary).
+RESULT: FAIL
+rc=1
+### docker restart p2s-fk85 (the full restart FrankenPHP needs)
+== Worker restart
+  OK   pid 1 (frankenphp run --config /etc/frankenphp/Caddyfile --adapter caddyfile ) started 2026-10-22 01:47:41 UTC >= last PHP change 2026-10-22 01:47:41 UTC
+== Effective settings (FPM: php.ini/conf.d overridden by pool php_admin_*; LiteSpeed/FrankenPHP: php.ini/conf.d)
+  /usr/local/bin/frankenphp (frankenphp) memory_limit=128M post_max_size=8M upload_max_filesize=7M session.upload_progress.enabled=0 fatal_error_backtraces=0  [ini] upload_progress:ok
+  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary).
+RESULT: PASS
+rc=0
+### rollback
+Rolling back backup set 20261022-014741
+  removed  /usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
+Restarting PHP workers:
+  note: FrankenPHP runs PHP inside its own process: restart it fully (systemctl restart frankenphp, docker restart <container>, or stop and re-run 'frankenphp run'). Not done automatically.
+############ p2s-fk84 (dunglas/frankenphp:1.12-php8.4)
+### check
+PHP2Shell check v1.1.0  (CVE-2026-109618 / CVE-2026-109619)  read-only
+Fixed: 8.2.35  8.3.36  8.4.27  8.5.12   (8.1 and older: unsupported)
+Target: host:f5eddc7bb790    SAPIs: frankenphp(running)
+
+[VULNERABLE ] host:f5eddc7bb790  /usr/local/bin/php  (8.4.26)
+              sapi=cli package=none changelog_fix=unknown
+              memory_limit=128M post_max_size=8M upload_max_filesize=2M session.upload_progress.enabled=1 fatal_error_backtraces=n/a 
+[VULNERABLE ] host:f5eddc7bb790  /usr/local/bin/php-cgi  (8.4.26)
+              sapi=cgi package=none changelog_fix=unknown
+              memory_limit=128M post_max_size=8M upload_max_filesize=2M session.upload_progress.enabled=On fatal_error_backtraces=n/a 
+[VULNERABLE ] host:f5eddc7bb790  /usr/local/bin/frankenphp  (8.4.26)
+              sapi=frankenphp package=none changelog_fix=unknown
+              memory_limit=128M post_max_size=8M upload_max_filesize=2M session.upload_progress.enabled=1 fatal_error_backtraces=n/a 
+
+Overall: ACTION REQUIRED. Update to a fixed release or your distro's backport and restart every worker. 8.1 and older: take offline or use a vendor LTS backport. Temporary mitigations: php2shell_mitigate.sh (dry-run by default).
+Also check vendor products bundling PHP: https://github.com/NCSC-NL/php2shell
+rc=1
+### dry
++++ b/usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
+@@ -0,0 +1,6 @@
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++; Official php.net temporary mitigations. Not a fix: update PHP.
++session.upload_progress.enabled = 0
++post_max_size = 8M
++upload_max_filesize = 7M
++; END php2shell-mitigation
+
+DRY-RUN: 1 file(s) would change. Nothing was written. Re-run with --apply after approval.
+Workers must be restarted (php.net: restart every worker):
+  # FrankenPHP runs PHP inside its own process: restart it fully (systemctl restart frankenphp, docker restart <container>, or stop and re-run 'frankenphp run'). Not done automatically.
+### apply --restart
+Applied 1 change(s). Backups + manifest: /var/backups/php2shell/20261022-014753   Rollback: php2shell_mitigate.sh --rollback 20261022-014753
+Workers must be restarted (php.net: restart every worker):
+  # FrankenPHP runs PHP inside its own process: restart it fully (systemctl restart frankenphp, docker restart <container>, or stop and re-run 'frankenphp run'). Not done automatically.
+Restarting PHP workers:
+  note: FrankenPHP runs PHP inside its own process: restart it fully (systemctl restart frankenphp, docker restart <container>, or stop and re-run 'frankenphp run'). Not done automatically.
+### verify (before container restart)
+== Versions
+  [VULNERABLE] /usr/local/bin/php 8.4.26 (none, changelog_fix=unknown)
+  [VULNERABLE] /usr/local/bin/php-cgi 8.4.26 (none, changelog_fix=unknown)
+  [VULNERABLE] /usr/local/bin/frankenphp 8.4.26 (none, changelog_fix=unknown)
+== Worker restart
+  FAIL pid 1 (frankenphp run --config /etc/frankenphp/Caddyfile --adapter caddyfile ) started 2026-10-22 01:47:46 UTC BEFORE last PHP change 2026-10-22 01:47:53 UTC -> restart it
+  fix: sudo php2shell_mitigate.sh --restart-only   (restarts php-fpm/apache via systemctl or graceful signal)
+== Effective settings (FPM: php.ini/conf.d overridden by pool php_admin_*; LiteSpeed/FrankenPHP: php.ini/conf.d)
+  /usr/local/bin/frankenphp (frankenphp) memory_limit=128M post_max_size=8M upload_max_filesize=7M session.upload_progress.enabled=0 fatal_error_backtraces=n/a  [ini] upload_progress:ok
+  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary).
+RESULT: FAIL
+rc=1
+### docker restart p2s-fk84 (the full restart FrankenPHP needs)
+== Worker restart
+  OK   pid 1 (frankenphp run --config /etc/frankenphp/Caddyfile --adapter caddyfile ) started 2026-10-22 01:47:53 UTC >= last PHP change 2026-10-22 01:47:53 UTC
+== Effective settings (FPM: php.ini/conf.d overridden by pool php_admin_*; LiteSpeed/FrankenPHP: php.ini/conf.d)
+  /usr/local/bin/frankenphp (frankenphp) memory_limit=128M post_max_size=8M upload_max_filesize=7M session.upload_progress.enabled=0 fatal_error_backtraces=n/a  [ini] upload_progress:ok
+  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary).
+RESULT: FAIL
+rc=0
+### rollback
+Rolling back backup set 20261022-014753
+  removed  /usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
+Restarting PHP workers:
+  note: FrankenPHP runs PHP inside its own process: restart it fully (systemctl restart frankenphp, docker restart <container>, or stop and re-run 'frankenphp run'). Not done automatically.

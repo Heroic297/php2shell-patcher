@@ -1,0 +1,36 @@
+### reset to vulnerable 8.3.6-0maysync1, restart service
+ii  php8.3-fpm     8.3.6-0maysync1 amd64        server-side, HTML-embedded scripting language (FPM-CGI binary)
+### apply --restart (systemd)
+  systemctl restart php8.3-fpm.service
+Restarting PHP workers:
+  + systemctl restart php8.3-fpm.service
+MainPID=20474
+### upgrade with restarts deferred (policy-rc.d 101)
+ii  php8.3-fpm     8.3.6-0ubuntu0.24.04.13 amd64        server-side, HTML-embedded scripting language (FPM-CGI binary)
+MainPID=20474
+### verify (expect stale FAIL)
+== Worker restart
+  FAIL pid 20474 php-fpm8.3 runs a DELETED binary (old version still in memory) -> restart it
+  fix: sudo php2shell_mitigate.sh --restart-only   (php-fpm/apache/LiteSpeed via systemctl or graceful signal; FrankenPHP: restart its service or container)
+== Effective settings (FPM: php.ini/conf.d overridden by pool php_admin_*; LiteSpeed/FrankenPHP: php.ini/conf.d)
+RESULT: FAIL
+### mitigate --restart-only
+Restarting PHP workers:
+  + systemctl restart php8.3-fpm.service
+MainPID=27029
+### verify
+== Versions
+  [PATCHED] /usr/sbin/php-fpm8.3 8.3.6 (deb:php8.3-fpm=8.3.6-0ubuntu0.24.04.13, changelog_fix=yes(backport))
+  [PATCHED] /usr/bin/php8.3 8.3.6 (deb:php8.3-cli=8.3.6-0ubuntu0.24.04.13, changelog_fix=yes(backport))
+== Worker restart
+  OK   pid 27029 (php-fpm: master process (/etc/php/8.3/fpm/php-fpm.conf)                       ) started 2026-10-22 01:48:33 UTC >= last PHP change 2026-10-22 01:48:29 UTC
+== Effective settings (FPM: php.ini/conf.d overridden by pool php_admin_*; LiteSpeed/FrankenPHP: php.ini/conf.d)
+RESULT: PASS
+### rollback --restart
+Rolling back backup set 20261022-014824
+  removed  /etc/php/8.3/fpm/conf.d/zz-php2shell-mitigation.ini
+  removed  /etc/php/8.3/cli/conf.d/zz-php2shell-mitigation.ini
+  restored /etc/php/8.3/fpm/pool.d/www.conf
+Restarting PHP workers:
+  + systemctl restart php8.3-fpm.service
+active

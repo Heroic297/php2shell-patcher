@@ -2,9 +2,11 @@
 # php2shell_mitigate.sh - official php.net TEMPORARY mitigations for PHP2Shell
 # (CVE-2026-109618 / CVE-2026-109619). NOT a fix: update PHP and restart workers.
 #
+# Covers FPM, Apache mod_php, CGI, LiteSpeed lsphp and FrankenPHP (php.ini/conf.d).
 # Default is DRY-RUN: prints a unified diff of what would change, writes nothing.
 #   --apply            write changes (backs up every touched file first)
 #   --restart          after --apply/--rollback, gracefully reload PHP workers
+#   --restart-only     just restart PHP workers (e.g. after a package upgrade); no config change
 #   --rollback [TS]    undo the latest (or given) backup set
 #   --post-max SIZE    post_max_size cap (default 8M; php.net: 32M if you need uploads)
 #   --memory-unlimited also set memory_limit=-1 via php_admin_value (php.net option;
@@ -21,11 +23,12 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --apply) MODE=apply ;;
     --restart) RESTART=1 ;;
+    --restart-only) MODE=restartonly ;;
     --rollback) MODE=rollback; case "${2:-}" in [0-9]*) RB_TS=$2; shift;; esac ;;
     --post-max) shift; POST_MAX=${1:?size}; ;;
     --memory-unlimited) MEMU=1 ;;
     --backup-dir) shift; BK_ROOT=${1:?dir} ;;
-    -h|--help) sed -n '2,14p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,16p' "$0"; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 64 ;;
   esac; shift
 done
@@ -92,7 +95,7 @@ render_pool() { # file minor -> new content on stdout
 restart_cmds() {
   local u
   if have systemctl && [ -d /run/systemd/system ]; then
-    for u in $(systemctl list-units --type=service --state=running --no-legend 2>/dev/null | awk '{print $1}' | grep -E '^(php[0-9.]*-fpm|php-fpm|ea-php[0-9]+-php-fpm|apache2|httpd|lsws|lshttpd|frankenphp)\.service$'); do
+    for u in $(systemctl list-units --type=service --state=running --no-legend 2>/dev/null | awk '{print $1}' | grep -E '^(php[0-9.]*-fpm|php-fpm|php[0-9]+-php-fpm|ea-php[0-9]+-php-fpm|apache2|httpd|lsws|lshttpd|frankenphp)\.service$'); do
       echo "systemctl restart $u"
     done
   else
@@ -104,6 +107,15 @@ restart_cmds() {
     if grep -qsE '^(apache2|httpd)$' /proc/[0-9]*/comm; then
       have apachectl && echo "apachectl -k graceful" || echo "apache2ctl -k graceful"
     fi
+    if grep -qsxE 'litespeed|lshttpd|openlitespeed' /proc/[0-9]*/comm; then
+      local ctl=/usr/local/lsws/bin/lswsctrl; [ -x "$ctl" ] || ctl=lswsctrl
+      echo "$ctl restart   # graceful LiteSpeed restart"
+      local lp; lp=$(for d in /proc/[0-9]*; do [ "$(cat "$d/comm" 2>/dev/null)" = lsphp ] && printf '%s ' "${d#/proc/}"; done)
+      [ -n "$lp" ] && echo "kill ${lp% }   # stop lsphp workers (detached mode keeps old code); LiteSpeed respawns them on demand"
+    fi
+    if grep -qsx frankenphp /proc/[0-9]*/comm; then
+      echo "# FrankenPHP runs PHP inside its own process: restart it fully (systemctl restart frankenphp, docker restart <container>, or stop and re-run 'frankenphp run'). Not done automatically."
+    fi
   fi
 }
 
@@ -111,9 +123,16 @@ do_restart() {
   local c; c=$(restart_cmds)
   [ -z "$c" ] && { echo "No running PHP worker services found to restart."; return; }
   echo "Restarting PHP workers:"; printf '%s\n' "$c" | while IFS= read -r line; do
+    case "$line" in '#'*) echo "  note: ${line#\# }"; continue;; esac
     echo "  + $line"; sh -c "${line%%#*}" || echo "  ! failed: $line"
   done
 }
+
+# ---------- restart only ----------
+if [ "$MODE" = restartonly ]; then
+  [ "$(id -u)" != 0 ] && { echo "--restart-only needs root (sudo)." >&2; exit 77; }
+  do_restart; exit 0
+fi
 
 # ---------- rollback ----------
 if [ "$MODE" = rollback ]; then
@@ -141,11 +160,26 @@ echo "PHP2Shell temporary mitigations  mode=$MODE  post_max_size=$POST_MAX uploa
 echo "These are NOT a fix. Update to 8.5.12 / 8.4.27 / 8.3.36 / 8.2.35 (or your distro backport) and restart workers."
 echo
 
+same_file() { if have cmp; then cmp -s "$1" "$2"; else [ "$(cksum < "$1")" = "$(cksum < "$2")" ]; fi; }
+show_diff() { # minimal RHEL/Rocky images ship without diffutils: fall back to a plain listing
+  local path="$1" new="$2" old=/dev/null; [ -f "$path" ] && old="$path"
+  if have diff; then diff -u --label "a${path}" --label "b${path}" "$old" "$new"; return 0; fi
+  echo "--- a${path}  (diff not installed; showing lines added by this change)"
+  echo "+++ b${path}"
+  if [ "$old" = /dev/null ]; then sed 's/^/+/' "$new"; else awk 'NR==FNR{o[$0]++; next} !($0 in o) || !o[$0]-- {print "+" $0}' "$old" "$new"; fi
+}
+fpm_bins() { # unique FPM binaries (distro, official image, remi SCL, cPanel EA)
+  local b r seen=" "
+  for b in /usr/sbin/php-fpm* /usr/local/sbin/php-fpm /opt/remi/*/root/usr/sbin/php-fpm /opt/cpanel/ea-php*/root/usr/sbin/php-fpm; do
+    { [ -x "$b" ] && [ -f "$b" ]; } || continue; r=$(readlink -f "$b"); case "$seen" in *" $r "*) continue;; esac; seen="$seen$r "; echo "$b"
+  done
+}
+
 stage() { # path newfile
   local path="$1" new="$2" rel
-  if [ -f "$path" ] && cmp -s "$path" "$new"; then echo "unchanged: $path"; return; fi
+  if [ -f "$path" ] && same_file "$path" "$new"; then echo "unchanged: $path"; return; fi
   changes=$((changes+1))
-  if [ -f "$path" ]; then diff -u --label "a$path" --label "b$path" "$path" "$new"; else diff -u --label /dev/null --label "b$path" /dev/null "$new"; fi
+  show_diff "$path" "$new"
   [ "$MODE" = apply ] || return 0
   mkdir -p "$BK/files"
   if [ -f "$path" ]; then
@@ -173,13 +207,17 @@ $(pool_files)
 EOT
 
 echo
-if [ "$changes" = 0 ]; then echo "Nothing to change (mitigations already present or no PHP config found)."; exit 0; fi
+if [ "$changes" = 0 ]; then
+  echo "Nothing to change (mitigations already present or no PHP config found)."
+  echo "If PHP was just updated, restart workers ($0 --restart-only):"; restart_cmds | sed 's/^/  /'
+  exit 0
+fi
 if [ "$MODE" = dry ]; then
   echo "DRY-RUN: $changes file(s) would change. Nothing was written. Re-run with --apply after approval."
 else
   echo "Applied $changes change(s). Backups + manifest: $BK   Rollback: $0 --rollback $TS"
   # validate FPM config; auto-rollback if invalid
-  for b in /usr/sbin/php-fpm* /usr/local/sbin/php-fpm /usr/sbin/php-fpm; do
+  for b in $(fpm_bins); do
     [ -x "$b" ] || continue
     if ! "$b" -t >/dev/null 2>&1; then echo "! $b -t failed; rolling back"; "$0" --rollback "$TS" --backup-dir "$BK_ROOT"; exit 1; fi
   done

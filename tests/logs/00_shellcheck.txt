@@ -1,1 +1,0 @@
-shellcheck (all severities) rc=0

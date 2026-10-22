@@ -1,0 +1,43 @@
+### check
+PHP2Shell check v1.0.0  (CVE-2026-109618 / CVE-2026-109619)  read-only
+Fixed: 8.2.35  8.3.36  8.4.27  8.5.12   (8.1 and older: unsupported)
+Target: host:70fd96c052f8    SAPIs: fpm(running)
+
+[VULNERABLE ] host:70fd96c052f8  /usr/sbin/php-fpm8.3  (8.3.6)
+              sapi=fpm package=deb:php8.3-fpm=8.3.6-0maysync1 changelog_fix=no
+              memory_limit=128M post_max_size=8M upload_max_filesize=2M session.upload_progress.enabled=On fatal_error_backtraces=n/a 
+[VULNERABLE ] host:70fd96c052f8  /usr/bin/php8.3  (8.3.6)
+              sapi=cli package=deb:php8.3-cli=8.3.6-0maysync1 changelog_fix=no
+              memory_limit=-1 post_max_size=8M upload_max_filesize=2M session.upload_progress.enabled=1 fatal_error_backtraces=n/a 
+
+Overall: ACTION REQUIRED. Update to a fixed release or your distro's backport and restart every worker. 8.1 and older: take offline or use a vendor LTS backport. Temporary mitigations: php2shell_mitigate.sh (dry-run by default).
+Also check vendor products bundling PHP: https://github.com/NCSC-NL/php2shell
+### dry
+DRY-RUN: 3 file(s) would change. Nothing was written. Re-run with --apply after approval.
+Workers must be restarted (php.net: restart every worker):
+  systemctl restart php8.3-fpm.service
+MainPID=6231
+ActiveEnterTimestamp=Thu 2026-10-22 01:43:35 UTC
+### apply --restart
+Applied 3 change(s). Backups + manifest: /var/backups/php2shell/20261022-014338   Rollback: php2shell_mitigate.sh --rollback 20261022-014338
+Workers must be restarted (php.net: restart every worker):
+  systemctl restart php8.3-fpm.service
+Restarting PHP workers:
+  + systemctl restart php8.3-fpm.service
+MainPID=6573
+ActiveEnterTimestamp=Thu 2026-10-22 01:43:38 UTC
+active
+### verify
+== Versions
+  [VULNERABLE] /usr/sbin/php-fpm8.3 8.3.6 (deb:php8.3-fpm=8.3.6-0maysync1, changelog_fix=no)
+  [VULNERABLE] /usr/bin/php8.3 8.3.6 (deb:php8.3-cli=8.3.6-0maysync1, changelog_fix=no)
+== Worker restart
+  OK   pid 6573 (php-fpm: master process (/etc/php/8.3/fpm/php-fpm.conf)                       ) started 2026-10-22 01:43:37 UTC >= last PHP change 2026-10-22 01:43:38 UTC
+== Effective FPM settings (php.ini/conf.d of FPM binary, overridden by pool php_admin_*)
+  /usr/sbin/php-fpm8.3  memory_limit = 128M  [ini] info
+  /usr/sbin/php-fpm8.3  post_max_size = 8M  [pool] info
+  /usr/sbin/php-fpm8.3  upload_max_filesize = 7M  [pool] info
+  /usr/sbin/php-fpm8.3  session.upload_progress.enabled = 0  [pool] ok
+  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary).
+RESULT: FAIL
+rc=1

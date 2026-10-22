@@ -10,7 +10,7 @@ Distro packages may be patched by **backport** while `php -v` still shows an old
 |---|---|---|
 | `php2shell_check.sh` | never | Inventory + verdict per install (PATCHED / VULNERABLE / UNSUPPORTED / UNKNOWN), `--json` |
 | `php2shell_mitigate.sh` | only with `--apply` | php.net temporary mitigations, timestamped backups, `--rollback` |
-| `php2shell_verify.sh` | never | Post-patch: versions, workers restarted, effective FPM settings |
+| `php2shell_verify.sh` | never | Post-patch: versions, workers restarted, effective settings (FPM, LiteSpeed, FrankenPHP) |
 
 ## Usage
 ```bash
@@ -24,6 +24,7 @@ sudo ./php2shell_mitigate.sh --apply --restart   # also gracefully reload PHP wo
      --post-max 32M        # if the site needs uploads (php.net); upload_max_filesize is set 1M below
      --memory-unlimited    # memory_limit=-1 via php_admin_value; ONLY with a cgroup/container memory cap
 sudo ./php2shell_mitigate.sh --rollback [TIMESTAMP] [--restart]
+sudo ./php2shell_mitigate.sh --restart-only       # after a package upgrade: restart workers only, no config change
 
 sudo ./php2shell_verify.sh [--json]   # exit 0 PASS, 1 FAIL, 2 inconclusive
 ```
@@ -39,12 +40,25 @@ sudo ./php2shell_verify.sh [--json]   # exit 0 PASS, 1 FAIL, 2 inconclusive
 - Drop-in `zz-php2shell-mitigation.ini` in each conf.d (fpm/apache2/cgi/cli/litespeed, `/usr/local/etc/php/conf.d`, `/etc/php.d`): `session.upload_progress.enabled=0`, `post_max_size`, `upload_max_filesize`, and `fatal_error_backtraces=0` on 8.5.
 - Each FPM pool: a marked `php_admin_*` block appended to every pool section (cannot be overridden by apps). Re-runs are idempotent.
 - After `--apply` it runs `php-fpm -t`; if the config is invalid it rolls itself back.
-- Restart: prints `systemctl restart <unit>` (systemd) or `kill -USR2 <fpm master>` / `apachectl -k graceful`; runs them only with `--restart`.
+- Restart: prints `systemctl restart <unit>` (systemd: php*-fpm, php-fpm, remi `php8x-php-fpm`, ea-php, apache2/httpd, lsws/lshttpd, frankenphp) or, without systemd, `kill -USR2 <fpm master>` / `apachectl -k graceful` / `lswsctrl restart` plus stopping detached `lsphp` workers; runs them only with `--restart` or `--restart-only`.
+- Works without `diff`/`cmp` (minimal RHEL/Rocky images): falls back to listing the added lines.
+
+### Support matrix (tested in v1.1.0, see tests/RESULTS.md)
+| Platform / SAPI | check | mitigate | restart | verify |
+|---|---|---|---|---|
+| Debian/Ubuntu php*-fpm (apt, backports) | yes | yes | systemd or USR2 | yes |
+| RHEL/Rocky/Alma AppStream php-fpm (dnf module) | yes | yes (`/etc/php.d`, `/etc/php-fpm.d`) | systemd or USR2 | yes |
+| Remi SCL `php8x-php-fpm` | paths covered | paths covered | systemd unit matched | paths covered (not run end to end, see limits) |
+| Official `php:*-fpm` / `-apache` images | yes | yes | USR2 / graceful | yes |
+| OpenLiteSpeed + lsphp | yes (`lsphp -v`) | yes (lsphp `mods-available` scan dir) | `lswsctrl restart` + stop detached lsphp | yes |
+| FrankenPHP | yes (`frankenphp version`, `php-cli` ini) | yes (`/usr/local/etc/php/conf.d`) | **not automatic**: restart the frankenphp service/container yourself | yes (flags a process older than the change) |
+| LiteSpeed Enterprise / CloudLinux alt-php / cPanel EA | paths covered | paths covered | systemd | untested |
 
 ### What verify proves
 - Every install PATCHED (version or changelog backport).
 - No PHP master runs a deleted (replaced-on-disk) binary, and the master or its newest worker generation started after the newest PHP binary/package/config change (2 s slack for /proc tick rounding).
-- Effective FPM values = FPM ini merged with pool `php_admin_*` as parsed by `php-fpm -tt`.
+- Effective FPM values = FPM ini merged with pool `php_admin_*` as parsed by `php-fpm -tt`; LiteSpeed (`lsphp -i`) and FrankenPHP (`frankenphp php-cli`) values from their php.ini/conf.d.
+- LiteSpeed with no lsphp alive counts as OK (lsphp starts on demand with the current binary).
 
 ## Safety model
 1. **Read-only by default.** check and verify never write; mitigate is a dry-run unless `--apply`.

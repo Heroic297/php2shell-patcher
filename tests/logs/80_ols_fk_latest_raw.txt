@@ -1,0 +1,75 @@
+=== p2s-ols
+PHP2Shell check v1.0.0  (CVE-2026-109618 / CVE-2026-109619)  read-only
+Fixed: 8.2.35  8.3.36  8.4.27  8.5.12   (8.1 and older: unsupported)
+Target: host:055a26e3f080    SAPIs: litespeed(running)
+
+[PATCHED    ] host:055a26e3f080  /usr/local/lsws/lsphp85/bin/php  (8.5.12)
+              sapi=cli package=deb:lsphp85=8.5.12-1+resolute changelog_fix=unknown
+              memory_limit=1024M post_max_size=1024M upload_max_filesize=1024M session.upload_progress.enabled=1 fatal_error_backtraces=1 
+[PATCHED    ] host:055a26e3f080  /usr/local/lsws/lsphp85/bin/php8.5  (8.5.12)
+              sapi=cli package=deb:lsphp85=8.5.12-1+resolute changelog_fix=unknown
+              memory_limit=1024M post_max_size=1024M upload_max_filesize=1024M session.upload_progress.enabled=1 fatal_error_backtraces=1 
+[UNKNOWN    ] host:055a26e3f080  /usr/local/lsws/lsphp85/bin/lsphp  (?)
+              sapi=litespeed package=deb:lsphp85=8.5.12-1+resolute changelog_fix=unknown
+              memory_limit=1024M post_max_size=1024M upload_max_filesize=1024M session.upload_progress.enabled=On fatal_error_backtraces=On 
+
+Overall: UNKNOWN. Some installs could not be classified; check them manually.
+Also check vendor products bundling PHP: https://github.com/NCSC-NL/php2shell
++++ b/usr/local/lsws/lsphp85/etc/php/8.5/mods-available/zz-php2shell-mitigation.ini
+@@ -0,0 +1,7 @@
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++; Official php.net temporary mitigations. Not a fix: update PHP.
++session.upload_progress.enabled = 0
++post_max_size = 8M
++upload_max_filesize = 7M
++fatal_error_backtraces = 0
++; END php2shell-mitigation
+
+DRY-RUN: 1 file(s) would change. Nothing was written. Re-run with --apply after approval.
+Workers must be restarted (php.net: restart every worker):
+== Versions
+  [PATCHED] /usr/local/lsws/lsphp85/bin/php 8.5.12 (deb:lsphp85=8.5.12-1+resolute, changelog_fix=unknown)
+  [PATCHED] /usr/local/lsws/lsphp85/bin/php8.5 8.5.12 (deb:lsphp85=8.5.12-1+resolute, changelog_fix=unknown)
+  [UNKNOWN] /usr/local/lsws/lsphp85/bin/lsphp ? (deb:lsphp85=8.5.12-1+resolute, changelog_fix=unknown)
+== Worker restart
+  no running PHP worker processes found (nothing serving, or SAPI not detected)
+== Effective FPM settings (php.ini/conf.d of FPM binary, overridden by pool php_admin_*)
+  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary).
+RESULT: CHECK
+=== p2s-fk
+PHP2Shell check v1.0.0  (CVE-2026-109618 / CVE-2026-109619)  read-only
+Fixed: 8.2.35  8.3.36  8.4.27  8.5.12   (8.1 and older: unsupported)
+Target: host:ac4a59026b48    SAPIs: frankenphp(running)
+
+[PATCHED    ] host:ac4a59026b48  /usr/local/bin/php  (8.5.12)
+              sapi=cli package=none changelog_fix=unknown
+              memory_limit=128M post_max_size=8M upload_max_filesize=2M session.upload_progress.enabled=1 fatal_error_backtraces=1 
+[PATCHED    ] host:ac4a59026b48  /usr/local/bin/php-cgi  (8.5.12)
+              sapi=cgi package=none changelog_fix=unknown
+              memory_limit=128M post_max_size=8M upload_max_filesize=2M session.upload_progress.enabled=On fatal_error_backtraces=On 
+[PATCHED    ] host:ac4a59026b48  /usr/local/bin/frankenphp  (8.5.12)
+              sapi=frankenphp package=none changelog_fix=unknown
+
+Overall: all detected installs PATCHED. Confirm workers were restarted (php2shell_verify.sh).
+Also check vendor products bundling PHP: https://github.com/NCSC-NL/php2shell
++++ b/usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
+@@ -0,0 +1,7 @@
++; BEGIN php2shell-mitigation (CVE-2026-109618/109619) - remove after patching
++; Official php.net temporary mitigations. Not a fix: update PHP.
++session.upload_progress.enabled = 0
++post_max_size = 8M
++upload_max_filesize = 7M
++fatal_error_backtraces = 0
++; END php2shell-mitigation
+
+DRY-RUN: 1 file(s) would change. Nothing was written. Re-run with --apply after approval.
+Workers must be restarted (php.net: restart every worker):
+== Versions
+  [PATCHED] /usr/local/bin/php 8.5.12 (none, changelog_fix=unknown)
+  [PATCHED] /usr/local/bin/php-cgi 8.5.12 (none, changelog_fix=unknown)
+  [PATCHED] /usr/local/bin/frankenphp 8.5.12 (none, changelog_fix=unknown)
+== Worker restart
+  OK   pid 1 (frankenphp run --config /etc/frankenphp/Caddyfile --adapter caddyfile ) started 2026-10-22 01:44:26 UTC >= last PHP change 2026-10-21 18:02:54 UTC
+== Effective FPM settings (php.ini/conf.d of FPM binary, overridden by pool php_admin_*)
+  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary).
+RESULT: PASS
