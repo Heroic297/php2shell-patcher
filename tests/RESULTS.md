@@ -39,7 +39,8 @@ Bugs found and fixed during testing: libphp.so version misread as 2.9.14 (libxml
 | 3c | OpenLiteSpeed lsphp 8.1.33 | :1.8.4-lsphp81 | UNSUPPORTED | PASS | `80_litespeed.txt` |
 | 3d | FrankenPHP 1.13.2 / PHP 8.5.12 | dunglas/frankenphp:latest | PATCHED | PASS; ini read via `frankenphp php-cli` | `81_frankenphp.txt` |
 | 3e | FrankenPHP 1.12.7 / PHP 8.4.26 | dunglas/frankenphp:1.12-php8.4 | VULNERABLE | PASS; drop-in applied; restart is manual by design: verify FAILs "started BEFORE last PHP change" until `docker restart`, then OK | `81_frankenphp.txt` |
-| 4a | New-owner run, own-server path | bot flow against php:8.3.35-fpm with files downloaded from the v1.1.0 tag | end to end | see `95_new_owner_own_server.txt` | `95_...` |
+| 4a | New-owner run, own-server path | files downloaded from the v1.1.0 tag; target php:8.3.35-fpm | end to end | PASS: 3 raw URLs HTTP 200 + sha256 OK (v1.0.0 hashes unchanged), host scan with sudo found the container VULNERABLE, dry-run 4 files, apply + USR2, health script still `ok`, verify FAIL on version only (expected), moved to php:8.3.36-fpm, verify PASS, health `ok` | `95_new_owner_own_server.txt` |
+| 4b | New-owner run, hosted path | Hostinger blog + InMotion status page (read 10/21) | summary + draft | PASS: plain summaries, draft support message | `96_new_owner_hosted.md`; skill edits in `tests/SKILL_EDITS.md` |
 | R | Regression | php:8.3.35-fpm, 8.5.12-fpm, 8.1-apache, Ubuntu 24.04, Debian 12 | same as v1.0.0 | PASS, no change in verdicts | `90_regression_v110.txt` |
 
 Note: FrankenPHP tags `1.13.1-php8.x` had already been rebuilt with fixed PHP (8.5.12 / 8.3.36), so 1.12.7 was used for the vulnerable case. Rocky AppStream had no fixed php 8.2 build yet (8.2.33 was latest), so the RPM upgrade step itself could not be exercised.
@@ -53,3 +54,5 @@ Bugs found and fixed in v1.1.0
 6. FrankenPHP ini values were not read; now via `frankenphp php-cli`. FrankenPHP restart is reported as a manual step (never auto-run).
 7. verify showed no effective settings for lsphp/FrankenPHP; added. LiteSpeed with no lsphp alive no longer gives an inconclusive result.
 8. After a package upgrade there was no restart-only action, and "Nothing to change" hid the restart commands. Added `--restart-only`; verify prints the fix hint on stale workers.
+
+Remaining limits: remi SCL install could not be tested (rpms.remirepo.net metadata timed out from the box after about 7 min), so remi paths are covered by code but not by a run. RPM package upgrade not exercised (no fixed AppStream build yet). systemd tested on Ubuntu only (not on Rocky with systemd). LiteSpeed Enterprise, CloudLinux alt-php and cPanel EA are untested. FrankenPHP restart is manual. Health check in the bot flow used a local FastCGI request, not a public URL.

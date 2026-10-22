@@ -1,0 +1,78 @@
+## 1. download pinned v1.1.0 + sha256 check (hashes as the updated skill would list them)
+php2shell_verify.sh HTTP 200
+php2shell_verify.sh: OK
+php2shell_check.sh HTTP 200
+php2shell_check.sh: OK
+php2shell_mitigate.sh HTTP 200
+php2shell_mitigate.sh: OK
+## v1.0.0 still intact:
+7e69a0daf3c2628ba9eb060452c1b08d9273f62197a023772538f7563cb26ee9  -
+51130ad9500edbe38e07ddd4ee858da0453391e8ab063087392de6b5029d2059  -
+4a1840b978a30196a25dbc5b62b862c6930d80c46d70d506644b268782bc08e9  -
+## 2. start test target (vulnerable php:8.3.35-fpm) + health endpoint
+bash: line 1: cgi-fcgi: command not found
+health: 
+## 3. read-only scan from the host (sudo -> scans running containers)
+overall ACTION_REQUIRED
+  host:grok-bot-vm-149176465 /usr/sbin/php-fpm8.4 8.4.27 fpm PATCHED
+  host:grok-bot-vm-149176465 /usr/bin/php8.4 8.4.27 cli PATCHED
+  container:p2s-owner /usr/local/sbin/php-fpm 8.3.35 fpm VULNERABLE
+  container:p2s-owner /usr/local/bin/php 8.3.35 cli VULNERABLE
+  container:p2s-fk84 /usr/local/bin/php 8.4.26 cli VULNERABLE
+  container:p2s-fk84 /usr/local/bin/php-cgi 8.4.26 cgi VULNERABLE
+  container:p2s-fk84 /usr/local/bin/frankenphp 8.4.26 frankenphp VULNERABLE
+  container:p2s-fk85 /usr/local/bin/php 8.5.12 cli PATCHED
+  container:p2s-fk85 /usr/local/bin/php-cgi 8.5.12 cgi PATCHED
+  container:p2s-fk85 /usr/local/bin/frankenphp 8.5.12 frankenphp PATCHED
+  container:p2s-ols81 /usr/local/lsws/lsphp81/bin/php 8.1.33 cli UNSUPPORTED
+  container:p2s-ols81 /usr/local/lsws/lsphp81/bin/php8.1 8.1.33 cli UNSUPPORTED
+  container:p2s-ols81 /usr/local/lsws/lsphp81/bin/lsphp 8.1.33 litespeed UNSUPPORTED
+  container:p2s-ols84 /usr/local/lsws/lsphp84/bin/php 8.4.24 cli VULNERABLE
+  container:p2s-ols84 /usr/local/lsws/lsphp84/bin/php8.4 8.4.24 cli VULNERABLE
+  container:p2s-ols84 /usr/local/lsws/lsphp84/bin/lsphp 8.4.24 litespeed VULNERABLE
+  container:p2s-ols85 /usr/local/lsws/lsphp85/bin/php 8.5.12 cli PATCHED
+  container:p2s-ols85 /usr/local/lsws/lsphp85/bin/php8.5 8.5.12 cli PATCHED
+  container:p2s-ols85 /usr/local/lsws/lsphp85/bin/lsphp 8.5.12 litespeed PATCHED
+  container:p2s-sysd /usr/sbin/php-fpm8.3 8.3.6 fpm PATCHED
+  container:p2s-sysd /usr/bin/php8.3 8.3.6 cli PATCHED
+  container:p2s-rocky /usr/sbin/php-fpm 8.2.33 fpm VULNERABLE
+  container:p2s-rocky /usr/bin/php 8.2.33 cli VULNERABLE
+  container:p2s-rocky /usr/bin/php-cgi 8.2.33 cgi VULNERABLE
+## 4. plan + dry-run inside the target
++php_admin_value[upload_max_filesize] = 7M
++; END php2shell-mitigation
+
+DRY-RUN: 4 file(s) would change. Nothing was written. Re-run with --apply after approval.
+Workers must be restarted (php.net: restart every worker):
+  kill -USR2 1   # graceful php-fpm reload
+## 5. [approval card would go here] apply --restart
++++ b/usr/local/etc/php/conf.d/zz-php2shell-mitigation.ini
++++ b/usr/local/etc/php-fpm.d/docker.conf
++++ b/usr/local/etc/php-fpm.d/www.conf
++++ b/usr/local/etc/php-fpm.d/zz-docker.conf
+Applied 4 change(s). Backups + manifest: /var/backups/php2shell/20261022-015807   Rollback: /p2s/php2shell_mitigate.sh --rollback 20261022-015807
+  + kill -USR2 1   # graceful php-fpm reload
+bash: line 1: cgi-fcgi: command not found
+health: 
+## 6. verify (expected FAIL: still 8.3.35, mitigations active)
+  [VULNERABLE] /usr/local/sbin/php-fpm 8.3.35 (none, changelog_fix=unknown)
+  [VULNERABLE] /usr/local/bin/php 8.3.35 (none, changelog_fix=unknown)
+  OK   pid 1 (php-fpm: master process (/usr/local/etc/php-fpm.conf) [workers since 2026-10-22 01:58:07 UTC]) started 2026-10-22 01:58:07 UTC >= last PHP change 2026-10-22 01:58:07 UTC
+  /usr/local/sbin/php-fpm  session.upload_progress.enabled = 0  [pool] ok
+RESULT: FAIL
+## 7. real fix: move to php:8.3.36-fpm image, verify
+  [PATCHED] /usr/local/sbin/php-fpm 8.3.36 (none, changelog_fix=unknown)
+  [PATCHED] /usr/local/bin/php 8.3.36 (none, changelog_fix=unknown)
+  OK   pid 1 (php-fpm: master process (/usr/local/etc/php-fpm.conf) ) started 2026-10-22 01:58:09 UTC >= last PHP change 2026-10-21 15:59:56 UTC
+  note: EXPOSED only matters if the install is not yet PATCHED (mitigations are temporary).
+RESULT: PASS
+health: X-Powered-By: PHP/8.3.36
+## re-run of health check on vulnerable target before/after apply (first attempt: libfcgi install failed)
+Processing triggers for libc-bin (2.41-12+deb13u4) ...
+before:
+X-Powered-By: PHP/8.3.35
+ok
+Applied 4 change(s). Backups + manifest: /var/backups/php2shell/20261022-015830   Rollback: /p2s/php2shell_mitigate.sh --rollback 20261022-015830
+after apply:
+X-Powered-By: PHP/8.3.35
+ok
